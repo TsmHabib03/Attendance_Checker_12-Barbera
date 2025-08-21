@@ -108,7 +108,7 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>Student ID</th>
+                            <th>LRN</th>
                             <th>Name</th>
                             <th>Email</th>
                             <th>Class</th>
@@ -122,14 +122,14 @@
             students.forEach(student => {
                 html += `
                     <tr>
-                        <td>${student.student_id}</td>
+                        <td>${student.lrn}</td>
                         <td>${student.first_name} ${student.last_name}</td>
                         <td>${student.email}</td>
                         <td>${student.class}</td>
                         <td>${formatDate(student.created_at)}</td>
                         <td>
-                            <button onclick="viewStudent('${student.student_id}')" class="btn btn-primary btn-small">View</button>
-                            <button onclick="showQRCode('${student.student_id}')" class="btn btn-success btn-small">QR Code</button>
+                            <button onclick="viewStudent('${student.lrn}')" class="btn btn-primary btn-small">View</button>
+                            <button onclick="showQRCode('${student.lrn}')" class="btn btn-success btn-small">QR Code</button>
                         </td>
                     </tr>
                 `;
@@ -146,7 +146,7 @@
             
             filteredStudents = allStudents.filter(student => {
                 const matchesSearch = !searchTerm || 
-                    student.student_id.toLowerCase().includes(searchTerm) ||
+                    student.lrn.toLowerCase().includes(searchTerm) ||
                     student.first_name.toLowerCase().includes(searchTerm) ||
                     student.last_name.toLowerCase().includes(searchTerm) ||
                     student.email.toLowerCase().includes(searchTerm);
@@ -160,9 +160,9 @@
         }
 
         // View student details
-        async function viewStudent(studentId) {
+        async function viewStudent(lrn) {
             try {
-                const response = await fetch(`api/get_student_details.php?student_id=${studentId}`);
+                const response = await fetch(`api/get_student_details.php?lrn=${lrn}`);
                 const result = await response.json();
                 
                 if (result.success) {
@@ -172,7 +172,7 @@
                     let modalContent = `
                         <h2>Student Details</h2>
                         <div class="student-info">
-                            <p><strong>Student ID:</strong> ${student.student_id}</p>
+                            <p><strong>LRN:</strong> ${student.lrn}</p>
                             <p><strong>Name:</strong> ${student.first_name} ${student.last_name}</p>
                             <p><strong>Email:</strong> ${student.email}</p>
                             <p><strong>Class:</strong> ${student.class}</p>
@@ -182,7 +182,7 @@
                         <h3>QR Code</h3>
                         <div class="qr-code-display">
                             <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(student.qr_code)}" 
-                                 alt="QR Code for ${student.student_id}">
+                                 alt="QR Code for LRN ${student.lrn}">
                         </div>
                         
                         <h3>Recent Attendance</h3>
@@ -228,20 +228,20 @@
         }
 
         // Show QR code
-        function showQRCode(studentId) {
-            const student = allStudents.find(s => s.student_id === studentId);
+        function showQRCode(lrn) {
+            const student = allStudents.find(s => s.lrn === lrn);
             if (!student) return;
             
             const modalContent = `
                 <h2>QR Code for ${student.first_name} ${student.last_name}</h2>
                 <div class="qr-code-display">
                     <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(student.qr_code)}" 
-                         alt="QR Code for ${student.student_id}">
-                    <p><strong>Student ID:</strong> ${student.student_id}</p>
+                         alt="QR Code for LRN ${student.lrn}">
+                    <p><strong>LRN:</strong> ${student.lrn}</p>
                     <p><strong>Class:</strong> ${student.class}</p>
                 </div>
                 <div class="modal-actions">
-                    <button onclick="printQRCode('${studentId}')" class="btn btn-primary">Print QR Code</button>
+                    <button onclick="printQRCode('${lrn}')" class="btn btn-primary">Print QR Code</button>
                     <button onclick="closeModal()" class="btn btn-danger">Close</button>
                 </div>
             `;
@@ -258,7 +258,7 @@
             }
             
             const data = filteredStudents.map(student => ({
-                'Student ID': student.student_id,
+                'LRN': student.lrn,
                 'First Name': student.first_name,
                 'Last Name': student.last_name,
                 'Email': student.email,
@@ -274,16 +274,16 @@
             printElement('students-container', 'Students List');
         }
 
-        function printQRCode(studentId) {
-            const student = allStudents.find(s => s.student_id === studentId);
+        function printQRCode(lrn) {
+            const student = allStudents.find(s => s.lrn === lrn);
             if (!student) return;
             
             const qrHtml = `
                 <div class="qr-code-display">
                     <h2>${student.first_name} ${student.last_name}</h2>
                     <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(student.qr_code)}" 
-                         alt="QR Code for ${student.student_id}">
-                    <p><strong>Student ID:</strong> ${student.student_id}</p>
+                         alt="QR Code for LRN ${student.lrn}">
+                    <p><strong>LRN:</strong> ${student.lrn}</p>
                     <p><strong>Class:</strong> ${student.class}</p>
                 </div>
             `;
@@ -292,7 +292,7 @@
             printWindow.document.write(`
                 <html>
                 <head>
-                    <title>QR Code - ${student.student_id}</title>
+                    <title>QR Code - ${student.lrn}</title>
                     <style>
                         body { text-align: center; font-family: Arial, sans-serif; padding: 20px; }
                         .qr-code-display img { border: 2px solid #333; padding: 10px; }

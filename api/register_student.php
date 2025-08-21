@@ -11,39 +11,45 @@ try {
     $database = new Database();
     $db = $database->getConnection();
     
-    $student_id = $_POST['student_id'] ?? '';
+    $lrn = $_POST['lrn'] ?? '';
     $first_name = $_POST['first_name'] ?? '';
     $last_name = $_POST['last_name'] ?? '';
     $email = $_POST['email'] ?? '';
     $class = $_POST['class'] ?? '';
     
     // Validate required fields
-    if (empty($student_id) || empty($first_name) || empty($last_name) || empty($email) || empty($class)) {
+    if (empty($lrn) || empty($first_name) || empty($last_name) || empty($email) || empty($class)) {
         echo json_encode(['success' => false, 'message' => 'All fields are required']);
         exit;
     }
     
-    // Check if student ID already exists
-    $check_query = "SELECT id FROM students WHERE student_id = :student_id OR email = :email";
+    // Validate LRN format (11-13 digits, numeric only)
+    if (!preg_match('/^[0-9]{11,13}$/', $lrn)) {
+        echo json_encode(['success' => false, 'message' => 'LRN must be 11-13 digits (numeric only)']);
+        exit;
+    }
+    
+    // Check if LRN already exists
+    $check_query = "SELECT id FROM students WHERE lrn = :lrn OR email = :email";
     $check_stmt = $db->prepare($check_query);
-    $check_stmt->bindParam(':student_id', $student_id);
+    $check_stmt->bindParam(':lrn', $lrn);
     $check_stmt->bindParam(':email', $email);
     $check_stmt->execute();
     
     if ($check_stmt->rowCount() > 0) {
-        echo json_encode(['success' => false, 'message' => 'Student ID or email already exists']);
+        echo json_encode(['success' => false, 'message' => 'LRN or email already exists']);
         exit;
     }
     
-    // Generate QR code data (student ID + timestamp for uniqueness)
-    $qr_data = $student_id . '|' . time();
+    // Generate QR code data (LRN + timestamp for uniqueness)
+    $qr_data = $lrn . '|' . time();
     
     // Insert new student
-    $query = "INSERT INTO students (student_id, first_name, last_name, email, class, qr_code) 
-              VALUES (:student_id, :first_name, :last_name, :email, :class, :qr_code)";
+    $query = "INSERT INTO students (lrn, first_name, last_name, email, class, qr_code) 
+              VALUES (:lrn, :first_name, :last_name, :email, :class, :qr_code)";
     
     $stmt = $db->prepare($query);
-    $stmt->bindParam(':student_id', $student_id);
+    $stmt->bindParam(':lrn', $lrn);
     $stmt->bindParam(':first_name', $first_name);
     $stmt->bindParam(':last_name', $last_name);
     $stmt->bindParam(':email', $email);
@@ -53,13 +59,13 @@ try {
     if ($stmt->execute()) {
         // Generate QR code image using Google Charts API
         $qr_code_url = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" . urlencode($qr_data);
-        $qr_code_html = '<img src="' . $qr_code_url . '" alt="QR Code for ' . htmlspecialchars($student_id) . '">';
+        $qr_code_html = '<img src="' . $qr_code_url . '" alt="QR Code for LRN ' . htmlspecialchars($lrn) . '">';
         
         echo json_encode([
             'success' => true, 
             'message' => 'Student registered successfully!',
             'qr_code' => $qr_code_html,
-            'student_id' => $student_id
+            'lrn' => $lrn
         ]);
     } else {
         echo json_encode(['success' => false, 'message' => 'Failed to register student']);

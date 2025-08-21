@@ -26,6 +26,11 @@
         <main class="main-content">
             <div id="message"></div>
             
+            <div class="time-display" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+                <h4>Current Time (Philippines): <span id="current-time"></span></h4>
+                <p id="current-schedule-info">Loading schedule info...</p>
+            </div>
+            
             <div class="scanner-container">
                 <div class="scanner-status">
                     <h3>Camera Status: <span id="camera-status">Not Started</span></h3>
@@ -47,12 +52,13 @@
 
             <div class="manual-entry">
                 <h3>Manual Entry</h3>
-                <p>If camera scanning doesn't work, you can manually enter the student ID:</p>
+                <p>If camera scanning doesn't work, you can manually enter the LRN:</p>
                 <form id="manual-form">
                     <div class="form-group">
-                        <label for="manual-student-id">Student ID:</label>
-                        <input type="text" id="manual-student-id" name="student_id" class="form-control" 
-                               placeholder="e.g., STU001" pattern="[A-Z]{3}[0-9]{3}">
+                        <label for="manual-lrn">LRN (Learner Reference Number):</label>
+                        <input type="text" id="manual-lrn" name="lrn" class="form-control" 
+                               placeholder="e.g., 123456789012" pattern="[0-9]{11,13}" 
+                               title="LRN must be 11-13 digits" maxlength="13" minlength="11">
                     </div>
                     <button type="submit" class="btn btn-success">Mark Attendance</button>
                 </form>
@@ -158,8 +164,8 @@
             }
             
             try {
-                // Extract student ID from QR data (format: STU001|timestamp)
-                const studentId = qrData.split('|')[0];
+                // Extract LRN from QR data (format: 123456789012|timestamp)
+                const lrn = qrData.split('|')[0];
                 
                 // Mark attendance
                 const response = await fetch('api/mark_attendance.php', {
@@ -167,7 +173,7 @@
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
-                    body: `student_id=${encodeURIComponent(studentId)}`
+                    body: `lrn=${encodeURIComponent(lrn)}`
                 });
                 
                 const result = await response.json();
@@ -176,11 +182,15 @@
                     showMessage(result.message, 'success');
                     document.getElementById('result-details').innerHTML = `
                         <div class="alert alert-success">
-                            <h4>Attendance Marked!</h4>
+                            <h4>Attendance Recorded!</h4>
                             <p><strong>Student:</strong> ${result.student_name}</p>
-                            <p><strong>ID:</strong> ${result.student_id}</p>
-                            <p><strong>Time:</strong> ${result.time}</p>
-                            <p><strong>Status:</strong> ${result.status}</p>
+                            <p><strong>LRN:</strong> ${result.lrn}</p>
+                            <p><strong>Subject:</strong> ${result.subject}</p>
+                            <p><strong>Period:</strong> ${result.period}</p>
+                            <p><strong>Class Time:</strong> ${result.class_time}</p>
+                            <p><strong>Scanned At:</strong> ${result.scan_time}</p>
+                            <p><strong>Status:</strong> <span class="badge badge-${result.status.toLowerCase() === 'present' ? 'success' : result.status.toLowerCase() === 'late' ? 'warning' : 'danger'}">${result.status}</span></p>
+                            ${result.debug_info ? `<details><summary>Debug Info</summary><pre>${JSON.stringify(result.debug_info, null, 2)}</pre></details>` : ''}
                         </div>
                     `;
                     document.getElementById('scan-result').style.display = 'block';
@@ -208,10 +218,10 @@
         document.getElementById('manual-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const studentId = document.getElementById('manual-student-id').value;
+            const lrn = document.getElementById('manual-lrn').value;
             
-            if (!studentId) {
-                showMessage('Please enter a student ID', 'error');
+            if (!lrn) {
+                showMessage('Please enter an LRN', 'error');
                 return;
             }
             
@@ -221,14 +231,14 @@
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
-                    body: `student_id=${encodeURIComponent(studentId)}`
+                    body: `lrn=${encodeURIComponent(lrn)}`
                 });
                 
                 const result = await response.json();
                 
                 if (result.success) {
                     showMessage(result.message, 'success');
-                    document.getElementById('manual-student-id').value = '';
+                    document.getElementById('manual-lrn').value = '';
                     loadTodayAttendance();
                 } else {
                     showMessage(result.message, 'error');
@@ -248,13 +258,21 @@
                 if (result.success) {
                     const attendanceList = document.getElementById('today-list');
                     if (result.attendance.length > 0) {
-                        let html = '<table class="table"><thead><tr><th>Student ID</th><th>Name</th><th>Time</th><th>Status</th></tr></thead><tbody>';
+                        let html = '<table class="table"><thead><tr><th>LRN</th><th>Name</th><th>Subject</th><th>Period</th><th>Time</th><th>Status</th></tr></thead><tbody>';
                         result.attendance.forEach(record => {
+                            const statusClass = 
+                                record.status === 'present' ? 'badge-success' :
+                                record.status === 'late' ? 'badge-warning' :
+                                record.status === 'absent' ? 'badge-danger' :
+                                'badge-secondary';
+                            
                             html += `<tr>
-                                <td>${record.student_id}</td>
+                                <td>${record.lrn}</td>
                                 <td>${record.first_name} ${record.last_name}</td>
+                                <td>${record.subject}</td>
+                                <td>${record.period_number}</td>
                                 <td>${record.time}</td>
-                                <td><span class="badge ${record.status === 'present' ? 'badge-success' : 'badge-warning'}">${record.status}</span></td>
+                                <td><span class="badge ${statusClass}">${record.status.toUpperCase()}</span></td>
                             </tr>`;
                         });
                         html += '</tbody></table>';
@@ -268,6 +286,48 @@
             }
         }
 
+        // Update current time and schedule info
+        function updateTimeAndSchedule() {
+            const now = new Date();
+            const timeString = now.toLocaleString('en-PH', { 
+                timeZone: 'Asia/Manila',
+                year: 'numeric',
+                month: '2-digit', 
+                day: '2-digit',
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit',
+                hour12: true 
+            });
+            
+            document.getElementById('current-time').textContent = timeString;
+            
+            // Get current schedule info
+            fetch('api/get_current_schedule.php?class=12-BARBERRA')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const scheduleInfo = document.getElementById('current-schedule-info');
+                        if (data.current_period) {
+                            const period = data.current_period;
+                            scheduleInfo.innerHTML = `
+                                <strong>Current Period:</strong> ${period.subject} 
+                                (Period ${period.period_number}: ${period.start_time_formatted || ''} - ${period.end_time_formatted || ''})
+                                ${period.is_break ? ' <span class="badge badge-warning">BREAK TIME</span>' : ''}
+                            `;
+                        } else {
+                            scheduleInfo.innerHTML = `
+                                <strong>No class scheduled now</strong> 
+                                (${data.current_day} ${data.current_time})
+                            `;
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching schedule:', error);
+                });
+        }
+
         // Event listeners
         document.getElementById('start-scan').addEventListener('click', startScanning);
         document.getElementById('stop-scan').addEventListener('click', stopScanning);
@@ -276,6 +336,10 @@
         document.addEventListener('DOMContentLoaded', function() {
             initializeScanner();
             loadTodayAttendance();
+            updateTimeAndSchedule();
+            
+            // Update time every second
+            setInterval(updateTimeAndSchedule, 1000);
         });
     </script>
 </body>

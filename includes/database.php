@@ -1,4 +1,7 @@
 <?php
+// Set PHP timezone to Philippines
+date_default_timezone_set('Asia/Manila');
+
 // Database configuration
 class Database {
     private $host = 'localhost';
@@ -16,6 +19,10 @@ class Database {
                 $this->password
             );
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            
+            // Set MySQL timezone to Philippines
+            $this->conn->exec("SET time_zone = '+08:00'");
+            
         } catch(PDOException $exception) {
             echo "Connection error: " . $exception->getMessage();
         }

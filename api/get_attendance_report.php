@@ -16,9 +16,9 @@ try {
     }
     
     // Build query with optional class filter
-    $query = "SELECT a.*, s.first_name, s.last_name, s.class 
+    $query = "SELECT a.*, s.first_name, s.last_name, s.class, s.lrn 
               FROM attendance a 
-              JOIN students s ON a.student_id = s.student_id 
+              JOIN students s ON a.lrn = s.lrn 
               WHERE a.date BETWEEN :start_date AND :end_date";
     
     $params = [

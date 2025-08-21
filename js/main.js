@@ -52,10 +52,10 @@ function formatTime(timeString) {
     });
 }
 
-// Validate student ID format
-function validateStudentId(studentId) {
-    const pattern = /^[A-Z]{3}[0-9]{3}$/;
-    return pattern.test(studentId);
+// Validate LRN format (11-13 digits, numeric only)
+function validateLRN(lrn) {
+    const pattern = /^[0-9]{11,13}$/;
+    return pattern.test(lrn);
 }
 
 // Validate email format

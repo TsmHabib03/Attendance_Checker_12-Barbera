@@ -2,8 +2,8 @@
 header('Content-Type: application/json');
 require_once '../includes/database.php';
 
-if (!isset($_GET['student_id'])) {
-    echo json_encode(['success' => false, 'message' => 'Student ID is required']);
+if (!isset($_GET['lrn'])) {
+    echo json_encode(['success' => false, 'message' => 'LRN is required']);
     exit;
 }
 
@@ -11,12 +11,12 @@ try {
     $database = new Database();
     $db = $database->getConnection();
     
-    $student_id = $_GET['student_id'];
+    $lrn = $_GET['lrn'];
     
     // Get student details
-    $student_query = "SELECT * FROM students WHERE student_id = :student_id";
+    $student_query = "SELECT * FROM students WHERE lrn = :lrn";
     $student_stmt = $db->prepare($student_query);
-    $student_stmt->bindParam(':student_id', $student_id);
+    $student_stmt->bindParam(':lrn', $lrn);
     $student_stmt->execute();
     
     if ($student_stmt->rowCount() === 0) {
@@ -27,10 +27,10 @@ try {
     $student = $student_stmt->fetch(PDO::FETCH_ASSOC);
     
     // Get recent attendance (last 30 days)
-    $attendance_query = "SELECT * FROM attendance WHERE student_id = :student_id 
+    $attendance_query = "SELECT * FROM attendance WHERE lrn = :lrn 
                         ORDER BY date DESC, time DESC LIMIT 30";
     $attendance_stmt = $db->prepare($attendance_query);
-    $attendance_stmt->bindParam(':student_id', $student_id);
+    $attendance_stmt->bindParam(':lrn', $lrn);
     $attendance_stmt->execute();
     
     $attendance = $attendance_stmt->fetchAll(PDO::FETCH_ASSOC);

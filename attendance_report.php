@@ -165,9 +165,11 @@
                     <thead>
                         <tr>
                             <th>Date</th>
-                            <th>Student ID</th>
+                            <th>LRN</th>
                             <th>Name</th>
                             <th>Class</th>
+                            <th>Subject</th>
+                            <th>Period</th>
                             <th>Time</th>
                             <th>Status</th>
                         </tr>
@@ -176,14 +178,22 @@
             `;
             
             data.forEach(record => {
+                const statusClass = 
+                    record.status === 'present' ? 'badge-success' :
+                    record.status === 'late' ? 'badge-warning' :
+                    record.status === 'absent' ? 'badge-danger' :
+                    'badge-secondary';
+                
                 html += `
                     <tr>
                         <td>${formatDate(record.date)}</td>
-                        <td>${record.student_id}</td>
+                        <td>${record.lrn}</td>
                         <td>${record.first_name} ${record.last_name}</td>
                         <td>${record.class}</td>
+                        <td>${record.subject}</td>
+                        <td>${record.period_number || 'N/A'}</td>
                         <td>${formatTime(record.time)}</td>
-                        <td><span class="badge ${record.status === 'present' ? 'badge-success' : 'badge-warning'}">${record.status}</span></td>
+                        <td><span class="badge ${statusClass}">${record.status.toUpperCase()}</span></td>
                     </tr>
                 `;
             });
@@ -260,7 +270,7 @@
             
             const data = currentReportData.map(record => ({
                 'Date': record.date,
-                'Student ID': record.student_id,
+                'LRN': record.lrn,
                 'First Name': record.first_name,
                 'Last Name': record.last_name,
                 'Class': record.class,

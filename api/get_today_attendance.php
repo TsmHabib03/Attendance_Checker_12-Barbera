@@ -8,12 +8,12 @@ try {
     
     $today = date('Y-m-d');
     
-    // Get today's attendance with student details
-    $query = "SELECT a.*, s.first_name, s.last_name, s.class 
+    // Get today's attendance with student details and subjects
+    $query = "SELECT a.*, s.first_name, s.last_name, s.class, s.lrn 
               FROM attendance a 
-              JOIN students s ON a.student_id = s.student_id 
+              JOIN students s ON a.lrn = s.lrn 
               WHERE a.date = :today 
-              ORDER BY a.time ASC";
+              ORDER BY a.period_number ASC, a.time ASC";
     
     $stmt = $db->prepare($query);
     $stmt->bindParam(':today', $today);

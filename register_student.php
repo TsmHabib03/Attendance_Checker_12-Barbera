@@ -28,10 +28,11 @@
             
             <form id="studentForm" class="student-form">
                 <div class="form-group">
-                    <label for="student_id">Student ID:</label>
-                    <input type="text" id="student_id" name="student_id" class="form-control" required 
-                           placeholder="e.g., STU001" pattern="[A-Z]{3}[0-9]{3}" 
-                           title="Format: 3 uppercase letters followed by 3 numbers (e.g., STU001)">
+                    <label for="lrn">LRN (Learner Reference Number):</label>
+                    <input type="text" id="lrn" name="lrn" class="form-control" required 
+                           placeholder="e.g., 123456789012" pattern="[0-9]{11,13}" 
+                           title="LRN must be 11-13 digits (numeric only)" maxlength="13" minlength="11">
+                    <small class="form-text">Enter 11-13 digit numeric LRN</small>
                 </div>
 
                 <div class="form-group">
@@ -56,7 +57,7 @@
                     <label for="class">Class:</label>
                     <select id="class" name="class" class="form-control" required>
                         <option value="">Select Class</option>
-                        <option value="12-A">12-Barbera</option>
+                        <option value="12-BARBERRA">12-BARBERRA</option>
                         <option value="12-B">12-B</option>
                         <option value="12-C">12-C</option>
                         <option value="11-A">11-A</option>
